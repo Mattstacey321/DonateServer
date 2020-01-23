@@ -4,8 +4,9 @@ const { makeExecutableSchema } = require('apollo-server-express');
 
 const typeDefs=  gql`
     type Query{
-        isAccountExist(id:String):Boolean
+        isAccountExist(times:String,userID:String):Boolean
         addUser(id:String,username:String):[User]
+        howManyDaysLogin(id:String):Int
     }
     type User{
         id_user:String,
@@ -16,7 +17,9 @@ const typeDefs=  gql`
         username:String
     }
     type Mutation{
-        createUser(input:UserInput):User
+        createUser(input:UserInput):Boolean
+        checkDays(id:String):String
+        donateMoney(id:String):String
     }
 
 `;
