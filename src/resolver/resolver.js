@@ -10,18 +10,22 @@ module.exports = resolvers = {
         isAccountExist: async (root, { times,userID }) => {
             var nows = new Date(); //ngay hien tai
             var date = new Date(times); //ngay theo global time
-
+            console.log(date);
             return SignIn.find({ 'id_user': userID }).then((val) => {
                 if (val.length == 1) {
                     var m = nows.getDate() - date.getDate();
                     if (m == 0) {
+                        
                         //login trog 1 ngay
-                        UserInfo.findOne({ 'id:': userID },{'lastDaysLogin':date});
+                        UserInfo.findOneAndUpdate({ 'id': userID },{$set:{'lastDaysLogin':date}},{upsert:true}).then((v)=>{
+                            console.log(v);
+                        });
+
                         return true;
                     }
-                    else {
+                    else if(m==1) {
                         //login ngay hom sau
-                        UserInfo.findOne({ 'id:': userID },{$inc:{'daysLogin':1}});
+                        UserInfo.findOneAndUpdate({ 'id': userID },{$inc:{'daysLogin':1}});
                         return true;
                     }
                     
@@ -31,9 +35,15 @@ module.exports = resolvers = {
         },
         howManyDaysLogin: async (root, { id }) => {
             return UserInfo.find({ "id": id }).then((v) => {
-                return v;
+                return v.daysLogin;
             }).catch((err) => {
                 return "Has error"
+            })
+        },
+        totalMoney: async (root,{id})=>{
+            
+            return Total.find({"id":id}).then((v)=>{
+                console.log(v);
             })
         }
     },
@@ -46,6 +56,10 @@ module.exports = resolvers = {
                     days:0,
                     daysLogin:0,
                     lastDaysLogin:""
+                });
+                Total.create({
+                    id:value.id_user,
+                    totalMoney:0
                 });
             }).catch((err) => {
                 return false

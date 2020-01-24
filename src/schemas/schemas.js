@@ -7,6 +7,7 @@ const typeDefs=  gql`
         isAccountExist(times:String,userID:String):Boolean
         addUser(id:String,username:String):[User]
         howManyDaysLogin(id:String):Int
+        totalMoney(id:String):Int
     }
     type User{
         id_user:String,
