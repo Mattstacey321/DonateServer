@@ -8,6 +8,7 @@ const typeDefs=  gql`
         addUser(id:String,username:String):[User]
         howManyDaysLogin(id:String):Int
         totalMoney(id:String):Int
+        setLastLogin(id:String):String
     }
     type User{
         id_user:String,
