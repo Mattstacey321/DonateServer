@@ -16,8 +16,8 @@ module.exports = resolvers = {
           if (m == 0) {
             //login trog 1 ngay
             UserInfo.findOneAndUpdate(
-              { id: userID },
-              { $set: { lastDaysLogin: date } },
+              { "id": userID },
+              { $set: { "lastDaysLogin": date } },
               { upsert: true }
             ).then(v => {
               console.log(v);
@@ -27,7 +27,7 @@ module.exports = resolvers = {
           } else if (m == 1) {
             //login ngay hom sau
             UserInfo.findOneAndUpdate(
-              { id: userID },
+              { "id": userID },
               { $inc: { daysLogin: 1 } }
             );
             return true;
@@ -37,47 +37,65 @@ module.exports = resolvers = {
     },
     howManyDaysLogin: async (root, { id }) => {
       return UserInfo.findOne({ "id": id })
-        .then((v) => {
-          
+        .then(v => {
           return v.daysLogin;
         })
         .catch(err => {
           return "Has error";
         });
     },
-    totalMoney: async (root, { id }) => {
-      return Total.find({ id: id }).then(v => {
-        console.log(v);
-      });
+    totalDonate: async (root, { id }) => {
+      /*return Total.aggregate([{$group:{
+        _id:null,totalMoney:{$sum:"$totalMoney"}
+      }}]).then((v)=>{
+        console.log(v)
+      })*/
+      return Total.findOne({"id":"totalMoney"}).then((v)=>{
+        //console.log(v)
+        return v.totalMoney;
+      }).catch((err)=>{
+        return 0;
+      })
     },
+    userDonate:async (root,{id})=>{
+      return UserInfo.findOne({"id":id}).then((v)=>{
+        return v.totalMoney;
+      }).catch((err)=>{
+        return 0;
+      })
+    },  
     setLastLogin: async (root, { id }) => {
       const aa = new Dates();
       const a = await aa.getDates();
-      
+
       return UserInfo.findOneAndUpdate(
-        { id: id },
+        { "id": id },
         { $set: { lastDaysLogin: a } },
         { upsert: true }
-      ).then(v => {
-        return true;
-      }).catch((err)=>{return false;});
+      )
+        .then(v => {
+          return true;
+        })
+        .catch(err => {
+          return false;
+        });
     },
-    checkLastLogin: async (root,{id})=>{
-      var dates=  new Dates();
-      let a= await dates.getDates();
-      let aaa= new Date(a);
-      UserInfo.findOne({"id":id}).then((v)=>{
-        var bbb= new Date(v.lastDaysLogin);
-        var aa= aaa.getDate()-bbb.getDate();
-        console.log(aa)
-      })
+    checkLastLogin: async (root, { id }) => {
+      var dates = new Dates();
+      let a = await dates.getDates();
+      let aaa = new Date(a);
+      UserInfo.findOne({ id: id }).then(v => {
+        var bbb = new Date(v.lastDaysLogin);
+        var aa = aaa.getDate() - bbb.getDate();
+        console.log(aa);
+      });
     },
-    compareDays: async (root,{id})=>{
-      var dates= new Dates();
-      if(dates.compareDates(id)){
+    // so sanh ngay xem la login o gay hom sau
+    compareDays: async (root, { id }) => {
+      var dates = new Dates();
+      if (dates.compareDates(id)) {
         return true;
-      }
-      else return false;
+      } else return false;
     }
   },
   Mutation: {
@@ -85,18 +103,13 @@ module.exports = resolvers = {
       return SignIn.create(input)
         .then(value => {
           UserInfo.create({
-            id: value.id_user,
+            "id": value.id_user,
             totalMoney: 0,
             days: 0,
             daysLogin: 0,
             lastDaysLogin: ""
-          }).then((v)=>{
-            Total.create({
-                id: value.id_user,
-                totalMoney: 0
-              });
           });
-          
+
           return true;
         })
         .catch(err => {
@@ -127,12 +140,26 @@ module.exports = resolvers = {
       // lay previous value
       // cong vao
       var defaultMoney = 10000;
-      UserInfo.updateOne(
-        { id: id },
-        { $inc: { totalMoney: defaultMoney } }
-      ).then(v => {
-        return v;
-      });
+      var dates= new Dates();
+      /*Total.create({id:"",totalMoney:0,log:[]});*/
+      return UserInfo.updateOne(
+        { "id": id },
+        { $inc: { "totalMoney": defaultMoney } },
+        { upsert: true }
+      )
+        .then(v => {
+          return Total.findOneAndUpdate(
+            { "id": "totalMoney" },
+            { $inc: { "totalMoney": defaultMoney },$push: { "log": id+" has donated 10K at "+dates.getDates() }},
+            
+          ).then(vv => {
+            return true;
+          });
+        })
+        .catch(err => {
+          console.log(err);
+          return false;
+        });
     }
   }
 };
