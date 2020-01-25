@@ -1,8 +1,8 @@
 const rq = require("request-promise");
-class getDates {
-
+const userInfo = require("../models/userInfo");
+class Dates {
   async getDates() {
-    var utc_time="";
+    var utc_time = "";
     var option = {
       uri: "http://worldtimeapi.org/api/timezone/Asia/Ho_Chi_Minh",
       json: true
@@ -14,9 +14,22 @@ class getDates {
               dateStyle: "short",
               timeStyle: "long"
             });*/
-     
     });
     return utc_time;
   }
+  convert2UTC(dates) {
+    var convert2UTC = new Date(dates);
+    return convert2UTC.getDate();
+  }
+  async compareDates(id) {
+    var presentDays = await this.getDates();
+
+    await userInfo.findOne({ id: id }).then(v => {
+      var lastDays = this.convert2UTC(v.lastDaysLogin);
+      var nows = this.convert2UTC(presentDays);
+
+      nows - lastDays > 1 ? true : false;
+    });
+  }
 }
-module.exports = getDates;
+module.exports = Dates;

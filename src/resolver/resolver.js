@@ -2,7 +2,7 @@ const SignIn = require("../models/signIn");
 const UserInfo = require("../models/userInfo");
 const rq = require("request-promise");
 const Total = require("../models/total");
-const getDates = require("./getDates");
+const Dates = require("./Dates");
 module.exports = resolvers = {
   Query: {
     isAccountExist: async (root, { times, userID }) => {
@@ -36,8 +36,9 @@ module.exports = resolvers = {
       });
     },
     howManyDaysLogin: async (root, { id }) => {
-      return UserInfo.find({ id: id })
-        .then(v => {
+      return UserInfo.findOne({ "id": id })
+        .then((v) => {
+          
           return v.daysLogin;
         })
         .catch(err => {
@@ -50,16 +51,33 @@ module.exports = resolvers = {
       });
     },
     setLastLogin: async (root, { id }) => {
-      const aa = new getDates();
+      const aa = new Dates();
       const a = await aa.getDates();
       
       return UserInfo.findOneAndUpdate(
-        { id: userID },
+        { id: id },
         { $set: { lastDaysLogin: a } },
         { upsert: true }
       ).then(v => {
-      
-      });
+        return true;
+      }).catch((err)=>{return false;});
+    },
+    checkLastLogin: async (root,{id})=>{
+      var dates=  new Dates();
+      let a= await dates.getDates();
+      let aaa= new Date(a);
+      UserInfo.findOne({"id":id}).then((v)=>{
+        var bbb= new Date(v.lastDaysLogin);
+        var aa= aaa.getDate()-bbb.getDate();
+        console.log(aa)
+      })
+    },
+    compareDays: async (root,{id})=>{
+      var dates= new Dates();
+      if(dates.compareDates(id)){
+        return true;
+      }
+      else return false;
     }
   },
   Mutation: {
@@ -72,11 +90,14 @@ module.exports = resolvers = {
             days: 0,
             daysLogin: 0,
             lastDaysLogin: ""
+          }).then((v)=>{
+            Total.create({
+                id: value.id_user,
+                totalMoney: 0
+              });
           });
-          Total.create({
-            id: value.id_user,
-            totalMoney: 0
-          });
+          
+          return true;
         })
         .catch(err => {
           return false;
@@ -91,7 +112,7 @@ module.exports = resolvers = {
       };
       return rq(option).then(value => {
         var utc_time = value["utc_datetime"];
-        var convertDays = new Date(utc_time); // convert to local times
+        var convertDays = new Dates(utc_time); // convert to local times
         locateDay = convertDays.toLocaleDateString([], {
           dateStyle: "short",
           timeStyle: "long"
