@@ -50,9 +50,11 @@ module.exports = resolvers = {
       }}]).then((v)=>{
         console.log(v)
       })*/
+      
       return Total.findOne({"id":"totalMoney"}).then((v)=>{
-        //console.log(v)
-        return v.totalMoney;
+        var percent= (v.totalMoney/ v.target) *100;
+        
+        return {"totalMoney":v.totalMoney,"completed":percent};
       }).catch((err)=>{
         return 0;
       })

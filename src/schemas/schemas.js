@@ -7,7 +7,7 @@ const typeDefs=  gql`
         isAccountExist(times:String,userID:String):Boolean
         addUser(id:String,username:String):[User]
         howManyDaysLogin(id:String):Int
-        totalDonate(id:String):Int
+        totalDonate(id:String):totalMoney
         userDonate(id:String):Int
         setLastLogin(id:String):Boolean
         checkLastLogin(id:String):String
@@ -20,6 +20,10 @@ const typeDefs=  gql`
     input UserInput{
         id_user:String
         username:String
+    }
+    type totalMoney{
+        totalMoney:Int
+        completed:Float
     }
     type Mutation{
         createUser(input:UserInput):Boolean
