@@ -54,7 +54,7 @@ module.exports = resolvers = {
       return Total.findOne({"id":"totalMoney"}).then((v)=>{
         var percent= (v.totalMoney/ v.target) *100;
         
-        return {"totalMoney":v.totalMoney,"completed":percent};
+        return {"totalMoney":v.target,"completed":percent};
       }).catch((err)=>{
         return 0;
       })
