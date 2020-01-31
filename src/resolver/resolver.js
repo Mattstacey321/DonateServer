@@ -6,33 +6,42 @@ const Dates = require("./Dates");
 module.exports = resolvers = {
   Query: {
     isAccountExist: async (root, { times, userID }) => {
-      var nows = new Date(); //ngay hien tai
+      var dates = new Dates(); //ngay hien tai
       var date = new Date(times); //ngay theo global time
       console.log(date);
 
-      return SignIn.find({ id_user: userID }).then(val => {
-        if (val.length == 1) {
-          var m = nows.getDate() - date.getDate();
-          if (m == 0) {
-            //login trog 1 ngay
-            UserInfo.findOneAndUpdate(
-              { "id": userID },
-              { $set: { "lastDaysLogin": date } },
-              { upsert: true }
-            ).then(v => {
-              console.log(v);
-            });
-
-            return true;
-          } else if (m == 1) {
-            //login ngay hom sau
-            UserInfo.findOneAndUpdate(
-              { "id": userID },
-              { $inc: { daysLogin: 1 } }
-            );
-            return true;
-          }
-        } else return false;
+      return SignIn.find({ "id_user": userID }).then((val) => {
+        if(val.length ==1){
+          
+          return UserInfo.findOne({'id':userID}).then((v)=>{
+            var m = date.getDate()-dates.convert2UTC(v.lastDaysLogin);
+            if (m == 0) {
+              //login trog 1 ngay
+              UserInfo.findOneAndUpdate(
+                { "id": userID },
+                { $set: { "lastDaysLogin": date } },
+                { upsert: true }
+              ).then(v => {
+                console.log(v);
+              });
+  
+              return true;
+            } else if (m >0) {
+              //login ngay hom sau
+              return UserInfo.findOneAndUpdate(
+                { "id": userID },
+                { $inc: { "daysLogin": 1 } }
+              ).then((v)=>{
+                return true;
+              });
+              
+            }
+          })
+          
+          
+        }else return false;
+        
+        
       });
     },
     howManyDaysLogin: async (root, { id }) => {
@@ -53,8 +62,8 @@ module.exports = resolvers = {
       
       return Total.findOne({"id":"totalMoney"}).then((v)=>{
         var percent= (v.totalMoney/ v.target) *100;
-        
-        return {"totalMoney":v.target,"completed":percent};
+        var round= Math.round(percent * 100 + Number.EPSILON) /100;
+        return {"targetMoney":v.target,"completed":round};
       }).catch((err)=>{
         return 0;
       })
@@ -72,7 +81,7 @@ module.exports = resolvers = {
 
       return UserInfo.findOneAndUpdate(
         { "id": id },
-        { $set: { lastDaysLogin: a } },
+        { $set: { "lastDaysLogin": a } },
         { upsert: true }
       )
         .then(v => {
@@ -92,7 +101,7 @@ module.exports = resolvers = {
         console.log(aa);
       });
     },
-    // so sanh ngay xem la login o gay hom sau
+    // so sanh ngay xem la login o ngay hom sau
     compareDays: async (root, { id }) => {
       var dates = new Dates();
       if (dates.compareDates(id)) {
@@ -143,6 +152,7 @@ module.exports = resolvers = {
       // cong vao
       var defaultMoney = 10000;
       var dates= new Dates();
+      var nows= await ates.getDates();
       /*Total.create({id:"",totalMoney:0,log:[]});*/
       return UserInfo.updateOne(
         { "id": id },
@@ -152,7 +162,7 @@ module.exports = resolvers = {
         .then(v => {
           return Total.findOneAndUpdate(
             { "id": "totalMoney" },
-            { $inc: { "totalMoney": defaultMoney },$push: { "log": id+" has donated 10K at "+dates.getDates() }},
+            { $inc: { "totalMoney": defaultMoney },$push: { "log": id+" has donated 10K at "+  nows}},
             
           ).then(vv => {
             return true;
